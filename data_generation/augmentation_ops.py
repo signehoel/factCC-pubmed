@@ -25,8 +25,17 @@ def align_ws(old_token, new_token):
         return new_token
 
 
-def make_new_example(eid=None, text=None, claim=None, label=None, extraction_span=None,
-                     backtranslation=None, augmentation=None, augmentation_span=None, noise=None):
+def make_new_example(
+    eid=None,
+    text=None,
+    claim=None,
+    label=None,
+    extraction_span=None,
+    backtranslation=None,
+    augmentation=None,
+    augmentation_span=None,
+    noise=None,
+):
     # Embed example information in a json object.
     return {
         "id": eid,
@@ -37,16 +46,16 @@ def make_new_example(eid=None, text=None, claim=None, label=None, extraction_spa
         "backtranslation": backtranslation,
         "augmentation": augmentation,
         "augmentation_span": augmentation_span,
-        "noise": noise
+        "noise": noise,
     }
 
 
-class Transformation():
+class Transformation:
     # Base class for all data transformations
 
     def __init__(self):
         # Spacy toolkit used for all NLP-related substeps
-        self.spacy = spacy.load("en")
+        self.spacy = spacy.load("en_core_web_sm")
 
     def transform(self, example):
         # Function applies transformation on passed example
@@ -70,11 +79,15 @@ class SampleSentences(Transformation):
 
         # sample claim
         claim = random.choice(sents)
-        new_example = make_new_example(eid=page_id, text=page_doc,
-                                       claim=self.spacy(claim.text),
-                                       label=LABEL_MAP[True],
-                                       extraction_span=(claim.start, claim.end-1),
-                                       backtranslation=False, noise=False)
+        new_example = make_new_example(
+            eid=page_id,
+            text=page_doc,
+            claim=self.spacy(claim.text),
+            label=LABEL_MAP[True],
+            extraction_span=(claim.start, claim.end - 1),
+            backtranslation=False,
+            noise=False,
+        )
         return new_example
 
 
@@ -82,9 +95,28 @@ class NegateSentences(Transformation):
     # Apply or remove negation from negatable tokens
     def __init__(self):
         super().__init__()
-        self.__negatable_tokens = ("are", "is", "was", "were", "have", "has", "had",
-                                   "do", "does", "did", "can", "ca", "could", "may",
-                                   "might", "must", "shall", "should", "will", "would")
+        self.__negatable_tokens = (
+            "are",
+            "is",
+            "was",
+            "were",
+            "have",
+            "has",
+            "had",
+            "do",
+            "does",
+            "did",
+            "can",
+            "ca",
+            "could",
+            "may",
+            "might",
+            "must",
+            "shall",
+            "should",
+            "will",
+            "would",
+        )
 
     def transform(self, example):
         assert example["text"] is not None, "Text must be available"
@@ -104,7 +136,9 @@ class NegateSentences(Transformation):
 
     def __negate_sentences(self, claim):
         # find negatable token, return None if no candiates found
-        candidate_tokens = [token for token in claim if token.text in self.__negatable_tokens]
+        candidate_tokens = [
+            token for token in claim if token.text in self.__negatable_tokens
+        ]
 
         if not candidate_tokens:
             return None, None
@@ -127,24 +161,34 @@ class NegateSentences(Transformation):
             elif claim[negated_ix + 1].text == "no":
                 return None, None
 
-
         # negate token
         claim_tokens = [token.text_with_ws for token in claim]
         if is_negative:
             if claim[negated_ix + 1].text.lower() == "n't":
                 if claim[negated_ix + 1].text.lower() == "ca":
-                    claim_tokens[negated_ix] = "can" if claim_tokens[negated_ix].islower() else "Can"
+                    claim_tokens[negated_ix] = (
+                        "can" if claim_tokens[negated_ix].islower() else "Can"
+                    )
                 claim_tokens[negated_ix] = claim_tokens[negated_ix] + " "
             claim_tokens.pop(negated_ix + 1)
         else:
-            if claim[negated_ix].text.lower() in ["am", "may", "might", "must", "shall", "will"]:
+            if claim[negated_ix].text.lower() in [
+                "am",
+                "may",
+                "might",
+                "must",
+                "shall",
+                "will",
+            ]:
                 negation = "not "
             else:
                 negation = random.choice(["not ", "n't "])
 
             if negation == "n't ":
                 if claim[negated_ix].text.lower() == "can":
-                    claim_tokens[negated_ix] = "ca" if claim_tokens[negated_ix].islower() else "Ca"
+                    claim_tokens[negated_ix] = (
+                        "ca" if claim_tokens[negated_ix].islower() else "Ca"
+                    )
                 else:
                     claim_tokens[negated_ix] = claim_tokens[negated_ix][:-1]
             claim_tokens.insert(negated_ix + 1, negation)
@@ -186,11 +230,17 @@ class Backtranslation(Transformation):
 
     def __backtranslate(self, claim):
         # chose destination language, passed or random from list
-        dst_lang = self.dst_lang if self.dst_lang else random.choice(self.accepted_langs)
+        dst_lang = (
+            self.dst_lang if self.dst_lang else random.choice(self.accepted_langs)
+        )
 
         # translate to intermediate language and back
-        claim_trans = self.translator.translate(claim.text, target_language=dst_lang, format_="text")
-        claim_btrans = self.translator.translate(claim_trans["translatedText"], target_language=self.src_lang, format_="text")
+        claim_trans = self.translator.translate(
+            claim.text, target_language=dst_lang, format_="text"
+        )
+        claim_btrans = self.translator.translate(
+            claim_trans["translatedText"], target_language=self.src_lang, format_="text"
+        )
 
         # create new claim object
         new_claim = self.spacy(claim_btrans["translatedText"])
@@ -211,11 +261,27 @@ class PronounSwap(Transformation):
             "SUBJECT": ["you", "he", "she", "we", "they"],
             "OBJECT": ["me", "you", "him", "her", "us", "them"],
             "POSSESSIVE": ["my", "your", "his", "her", "its", "out", "your", "their"],
-            "REFLEXIVE": ["myself", "yourself", "himself", "itself", "outselves", "yourselves", "themselves"]
+            "REFLEXIVE": [
+                "myself",
+                "yourself",
+                "himself",
+                "itself",
+                "outselves",
+                "yourselves",
+                "themselves",
+            ],
         }
 
-        self.pronoun2class_map = {pronoun: key for (key, values) in self.class2pronoun_map.items() for pronoun in values}
-        self.pronouns = {pronoun for (key, values) in self.class2pronoun_map.items() for pronoun in values}
+        self.pronoun2class_map = {
+            pronoun: key
+            for (key, values) in self.class2pronoun_map.items()
+            for pronoun in values
+        }
+        self.pronouns = {
+            pronoun
+            for (key, values) in self.class2pronoun_map.items()
+            for pronoun in values
+        }
 
     def transform(self, example):
         assert example["text"] is not None, "Text must be available"
@@ -235,7 +301,9 @@ class PronounSwap(Transformation):
 
     def __swap_pronouns(self, claim):
         # find pronouns
-        claim_pronouns = [token for token in claim if token.text.lower() in self.pronouns]
+        claim_pronouns = [
+            token for token in claim if token.text.lower() in self.pronouns
+        ]
 
         if not claim_pronouns:
             return None, None
@@ -245,7 +313,11 @@ class PronounSwap(Transformation):
         chosen_ix = chosen_token.i
         chosen_class = self.pronoun2class_map[chosen_token.text.lower()]
 
-        candidate_tokens = [token for token in self.class2pronoun_map[chosen_class] if token != chosen_token.text.lower()]
+        candidate_tokens = [
+            token
+            for token in self.class2pronoun_map[chosen_class]
+            if token != chosen_token.text.lower()
+        ]
 
         if not candidate_tokens:
             return None, None
@@ -253,7 +325,9 @@ class PronounSwap(Transformation):
         # swap pronoun and update indices
         swapped_token = random.choice(candidate_tokens)
         swapped_token = align_ws(chosen_token.text_with_ws, swapped_token)
-        swapped_token = swapped_token if chosen_token.text.islower() else swapped_token.capitalize()
+        swapped_token = (
+            swapped_token if chosen_token.text.islower() else swapped_token.capitalize()
+        )
 
         claim_tokens = [token.text_with_ws for token in claim]
         claim_tokens[chosen_ix] = swapped_token
@@ -279,7 +353,9 @@ class NERSwap(Transformation):
         assert example["claim"] is not None, "Claim must be available"
 
         new_example = dict(example)
-        new_claim, aug_span = self.__swap_entities(new_example["text"], new_example["claim"])
+        new_claim, aug_span = self.__swap_entities(
+            new_example["text"], new_example["claim"]
+        )
 
         if new_claim:
             new_example["claim"] = new_claim
@@ -300,7 +376,13 @@ class NERSwap(Transformation):
 
         # choose entity to replace and find possible replacement in source
         replaced_ent = random.choice(claim_ents)
-        candidate_ents = [ent for ent in text_ents if ent.text != replaced_ent.text and ent.text not in replaced_ent.text and replaced_ent.text not in ent.text]
+        candidate_ents = [
+            ent
+            for ent in text_ents
+            if ent.text != replaced_ent.text
+            and ent.text not in replaced_ent.text
+            and replaced_ent.text not in ent.text
+        ]
 
         if not candidate_ents:
             return None, None
@@ -309,11 +391,18 @@ class NERSwap(Transformation):
         swapped_ent = random.choice(candidate_ents)
         claim_tokens = [token.text_with_ws for token in claim]
         swapped_token = align_ws(replaced_ent.text_with_ws, swapped_ent.text_with_ws)
-        claim_swapped = claim_tokens[:replaced_ent.start] + [swapped_token] + claim_tokens[replaced_ent.end:]
+        claim_swapped = (
+            claim_tokens[: replaced_ent.start]
+            + [swapped_token]
+            + claim_tokens[replaced_ent.end :]
+        )
 
         # create new claim object
         new_claim = self.spacy("".join(claim_swapped))
-        augmentation_span = (replaced_ent.start, replaced_ent.start + len(swapped_ent) - 1)
+        augmentation_span = (
+            replaced_ent.start,
+            replaced_ent.start + len(swapped_ent) - 1,
+        )
 
         if new_claim.text == claim.text:
             return None, None
@@ -325,8 +414,17 @@ class EntitySwap(NERSwap):
     # NER swapping class specialized for entities (people, companies, locations, etc.)
     def __init__(self):
         super().__init__()
-        self.categories = ("PERSON", "ORG", "NORP", "FAC", "GPE", "LOC", "PRODUCT",
-                           "WORK_OF_ART", "EVENT")
+        self.categories = (
+            "PERSON",
+            "ORG",
+            "NORP",
+            "FAC",
+            "GPE",
+            "LOC",
+            "PRODUCT",
+            "WORK_OF_ART",
+            "EVENT",
+        )
 
 
 class NumberSwap(NERSwap):
@@ -352,7 +450,7 @@ class AddNoise(Transformation):
 
         self.noise_prob = noise_prob
         self.delete_prob = delete_prob
-        self.spacy = spacy.load("en")
+        self.spacy = spacy.load("en_core_web_sm")
 
     def transform(self, example):
         assert example["text"] is not None, "Text must be available"

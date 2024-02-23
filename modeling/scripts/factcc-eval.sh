@@ -2,9 +2,9 @@
 # Evaluate FactCC model
 
 # UPDATE PATHS BEFORE RUNNING SCRIPT
-export CODE_PATH= # absolute path to modeling directory
-export DATA_PATH= # absolute path to data directory
-export CKPT_PATH= # absolute path to model checkpoint
+export CODE_PATH=/Users/signehoel/factCC/modeling # absolute path to modeling directory
+export DATA_PATH=/Users/signehoel/factCC/pubmed/test # absolute path to data directory
+export CKPT_PATH=/Users/signehoel/factCC/factcc-checkpoint # absolute path to model checkpoint
 
 export TASK_NAME=factcc_annotated
 export MODEL_NAME=bert-base-uncased
@@ -12,7 +12,6 @@ export MODEL_NAME=bert-base-uncased
 python3 $CODE_PATH/run.py \
   --task_name $TASK_NAME \
   --do_eval \
-  --eval_all_checkpoints \
   --do_lower_case \
   --overwrite_cache \
   --max_seq_length 512 \
