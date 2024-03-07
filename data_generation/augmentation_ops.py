@@ -442,6 +442,80 @@ class DateSwap(NERSwap):
 
         self.categories = ("DATE", "TIME")
 
+# Our implementation of ShuffleSentences
+class ShuffleSentences(Transformation):
+    """"
+    This transformation shuffles the sentences of the original text around
+    """
+    def __init__(self):
+        super().__init__()
+    
+    def transform(self, example):
+        assert example["text"] is not None, "Text must be available"
+        assert example["claim"] is not None, "Claim must be available"
+
+        new_example = dict(example)
+        new_text, aug_span = self.__shuffle_sentences(new_example["text"])
+
+        if new_text:
+            new_example["text"] = new_text
+            new_example["label"] = LABEL_MAP[False]
+            new_example["augmentation"] = self.__class__.__name__
+            new_example["augmentation_span"] = aug_span
+            return new_example
+        else:
+            return None
+    
+    def __shuffle_sentences(self, text):
+        to_shuffle=[]
+        for sentences in text.sents:
+            to_shuffle.append(sentences)
+        
+        random.shuffle(to_shuffle)
+        finalized_text = self.spacy(" ".join(to_shuffle))
+
+        return finalized_text, None
+
+# our implementation of DropWords
+class DropWords(Transformation):
+    def __init__(self, drop_prob=0.2):
+        super().__init__()
+        self.drop_prob = drop_prob
+    
+    def transform(self, example):
+        assert example["text"] is not None, "Text must be available"
+        assert example["claim"] is not None, "Claim must be available"
+
+        new_example = dict(example)
+        new_claim, aug_span = self.__drop_words(new_example["claim"])
+
+        if new_claim:
+            new_example["claim"] = new_claim
+            new_example["label"] = LABEL_MAP[False]
+            new_example["augmentation"] = self.__class__.__name__
+            new_example["augmentation_span"] = aug_span
+            return new_example
+        else:
+            return None
+    
+    def __drop_words(self, claim):
+        claim_toks=[]
+
+        for token in claim:
+            claim_toks.append(token.text_with_ws)
+        
+        finalized_claim=[]
+        for item in claim_toks:
+            random_num=random.random()
+            if random_num >= self.drop_prob:
+                finalized_claim.append(item)
+        
+        finalized_claim = self.spacy("".join(finalized_claim))
+
+        if claim.text == finalized_claim.text:
+            return None, None
+        else:
+            return finalized_claim, None
 
 class AddNoise(Transformation):
     # Inject noise into claims
