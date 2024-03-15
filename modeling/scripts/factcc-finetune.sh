@@ -2,9 +2,9 @@
 # Fine-tune FactCC model
 
 # UPDATE PATHS BEFORE RUNNING SCRIPT
-export CODE_PATH= # absolute path to modeling directory
-export DATA_PATH= # absolute path to data directory
-export OUTPUT_PATH= # absolute path to model checkpoint
+export CODE_PATH=modeling # path to modeling directory
+export DATA_PATH=pubmed/train # path to data directory
+export OUTPUT_PATH=custom-factcc # path to model checkpoint
 
 export TASK_NAME=factcc_generated
 export MODEL_NAME=bert-base-uncased

@@ -18,14 +18,14 @@ def merge_json(files, input_dir, output_dir, output_filename):
 
 def main():
     files = [
-        "data-dev-positive.jsonl",
-        "data-dev-negative.jsonl",
-        "data-dev-positive-noise.jsonl",
-        "data-dev-negative-noise.jsonl",
+        "data-valid-positive.jsonl",
+        "data-valid-negative.jsonl",
+        "data-valid-positive-noise.jsonl",
+        "data-valid-negative-noise.jsonl",
     ]
-    input_dir = "pubmed/test"
-    output_dir = "pubmed/test"
-    output_filename = "data-dev.jsonl"
+    input_dir = "pubmed/valid"  # Change this to the desired input directory
+    output_dir = "pubmed/valid"  # Change this to the desired output directory
+    output_filename = "data-valid.jsonl"  # Change this to the desired output filename
     merge_json(files, input_dir, output_dir, output_filename)
 
 

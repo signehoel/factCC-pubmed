@@ -2,9 +2,9 @@
 # Evaluate FactCC model
 
 # UPDATE PATHS BEFORE RUNNING SCRIPT
-export CODE_PATH=/Users/signehoel/factCC/modeling # absolute path to modeling directory
-export DATA_PATH=/Users/signehoel/factCC/pubmed/test # absolute path to data directory
-export CKPT_PATH=/Users/signehoel/factCC/factcc-checkpoint # absolute path to model checkpoint
+export CODE_PATH=modeling # absolute path to modeling directory
+export DATA_PATH=pubmed/valid # absolute path to data directory
+export CKPT_PATH=custom-factcc/checkpoint-4 # absolute path to model checkpoint
 
 export TASK_NAME=factcc_annotated
 export MODEL_NAME=bert-base-uncased
