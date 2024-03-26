@@ -1,3 +1,7 @@
+Work Adapted from the paper https://arxiv.org/abs/1910.12840 and codebase https://github.com/salesforce/factCC by Signe Hoel and Maggie Xiong for a project on adapting the performance of the FactCC model proposed on biomedical literature data. Below is the technical details as provided by the original paper and codebase.
+
+--------------------------------------
+
 # Evaluating the Factual Consistency of Abstractive Text Summarization
 
 Authors: [Wojciech Kryściński](https://twitter.com/iam_wkr), [Bryan McCann](https://bmccann.github.io/), [Caiming Xiong](http://www.stat.ucla.edu/~caiming/), and [Richard Socher](https://www.socher.org/)
