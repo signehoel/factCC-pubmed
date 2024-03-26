@@ -128,8 +128,28 @@ def main(args):
         if args.save_intermediate:
             save_data(args, data_negation, "negation")
 
+    data_shuffle = []
+    if not args.augmentations or "shuffle_sentences" in args.augmentations:
+        print("Randomly shuffling sentences examples")
+        shufflesent_op = ops.ShuffleSentences()
+        data_shuffle = apply_transformation(data_positive, shufflesent_op)
+        print("ShuffledSentences %s example pairs." % len(data_shuffle))
+
+        if args.save_intermediate:
+            save_data(args, data_shuffle, "shufflesent")
+
+    data_dropwords = []
+    if not args.augmentations or "drop_words" in args.augmentations:
+        print("Randomly dropping words examples")
+        dropwords_op = ops.DropWords()
+        data_dropwords = apply_transformation(data_positive, dropwords_op)
+        print("DropWords %s example pairs." % len(data_dropwords))
+
+        if args.save_intermediate:
+            save_data(args, data_dropwords, "dropwords")
+
     # add noise to all
-    data_negative = data_pronoun + data_dateswp + data_numswp + data_entswp + data_negation
+    data_negative = data_pronoun + data_dateswp + data_numswp + data_entswp + data_negation + data_shuffle + data_dropwords
     save_data(args, data_negative, "negative")
 
     # ADD NOISE
